@@ -4,8 +4,12 @@ import shutil
 import zipfile
 import os
 import argparse
-import subprocess
 from glob import glob
+
+try:
+    from PIL import Image
+except ImportError, e:
+    raise ImportError('Pillow package not found. Pillow must be installed to use tinypng. Please run: pip install -r requirements.txt, or similar.')
 
 # Taken from https://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
 def which(program):
@@ -73,18 +77,22 @@ if __name__ == '__main__':
     # Make images smaller
     for tiff in glob(os.path.join(deflated_zip, 'Data', '*.tff')):
         png = tiff.replace('.tiff', '.png')
-        subprocess.call('convert %s %s' % (tiff, png), shell=True)
-        subprocess.call('convert %s %s' % (png, tiff), shell=True)
+	image = Image.open(tiff)
+	image.save(png, "PNG")
+	image.close()
+        image = Image.open(png)
+        image.save(tiff, "TIFF")
+        image.close()
+	shutil.remove(png)
 
     # Rearchive
     shutil.make_archive(deflated_zip, 'zip', deflated_zip)
     shutil.rmtree(deflated_zip)
 
-    # Move back to key
+    # Move back to keynote
     if args.output_file:
         final_key = args.output_file
     else:
         final_key = args.keynote_file
 
-    # Move back to keynote
     os.rename(zip_file, final_key)

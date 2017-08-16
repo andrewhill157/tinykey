@@ -6,28 +6,34 @@ One reason for some of my presentations is that Keynote sometimes stores importe
 # Usage
 You can overwrite a file with:
 ```
-./tinypng mykey.key
+tinypng mykey.key
 ```
 
 You can also output a new file if you want to preserve the original file:
 ```
-./tinypng mykey.key -o mynewkey.key
+tinypng mykey.key -o mynewkey.key
 ```
 
-Note you must have `./` (if using tinypng from the directory you keep it in) or the full path to the tinypng executable in front of the command as shown above, unless you put the `tinypng` executable on your `PATH`, in which case you may just use `tinypng`.
+Note that unless you place this executable on your `PATH` you must run `./tinyping` (if using `tinypng` from the directory you keep it in) or the full path to the tinypng executable. If you have issues running as an executable, you may also use `python tinypng`.
 
 # Requirements
 You must have `python 2.7+` or `python 3.2+` installed.
 
-You must have [ImageMagick](https://www.imagemagick.org/script/index.php) installed. There are many ways to install, such as homebrew, macports, etc. For example, with homebrew:
+You must have the [Pillow](http://python-pillow.org/) package installed. Please run:
 ```
-brew install imagemagick
+pip install -r requirements.txt
+```
+
+or
+
+```
+pip install Pillow
 ```
 
 # Disclamer
 Note that `tinypng` will only reduce the size of your file if the cause is large TIFF images. For some of my large presentations this makes a huge difference (300MB -> 30 MB, for example), but your mileage may vary.
 
-All `tinypng` is doing is converting the TIFF files to PNG and back using ImageMagick which often results in much smaller TIFF files.
+All `tinypng` is doing is converting the TIFF files to PNG and back which often results in much smaller TIFF files in my hands.
 
 Keynote also has `File > Advanced > Reduce File Size` (as well as other alternatives) that might also be of use to you. However, this performs PNG -> JPEG conversion which doesn't play nicely with text-heavy images.
 
