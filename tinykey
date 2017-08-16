@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+
+import shutil
+import zipfile
+import os
+import argparse
+import subprocess
+from glob import glob
+
+# Taken from https://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
+def which(program):
+    import os
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser('Script to make keynote files smaller by reducing sizes of stored images.')
+    parser.add_argument('keynote_file', help='Keynote file to make smaller.')
+    parser.add_argument('--output_file', '-o', help='Optional name for output file (.key format). Default overwrites original file.')
+    parser.add_argument('--force', '-f', action='store_true', help='Force overwrite of any existing temporary files that already exist.')
+    args = parser.parse_args()
+
+    input_ext = args.keynote_file.split('.')[-1]
+
+    if input_ext != 'key':
+        raise ValueError('Specified input file does not end in .key: %s' % args.keynote_file)
+    
+    if args.output_file:
+        output_ext = args.output_file.split('.')[-1]
+
+        if output_ext != 'key':
+            raise ValueError('Specified output file does not end in .key: %s' % args.output_file)
+
+    if not which('convert'):
+        raise ValueError('command "convert" not found. Must have imagemagick installed (brew install imagemagick, for example) to use tinykey')
+
+    # Copy to zip
+    zip_file = args.keynote_file.replace('.key', '.zip')
+    shutil.copyfile(args.keynote_file, zip_file)
+
+    # Deflate zip
+    deflated_zip = zip_file.replace('.zip', '')
+
+    if os.path.exists(deflated_zip):
+        if args.force:
+            shutil.rmtree(deflated_zip)
+        else:
+            raise ValueError('Folder %s already exists. Please delete this folder or run with --force option.') 
+    
+
+    zip_ref = zipfile.ZipFile(zip_file, 'r')
+    os.mkdir(deflated_zip)
+    zip_ref.extractall(deflated_zip)
+    zip_ref.close()
+
+    if not os.path.exists(os.path.join(deflated_zip, 'Data')):
+        shutil.rmtree(deflated_zip)
+        raise ValueError('Unexpected file format. "Data" directory not found in unpacked keynote file.')
+
+    # Make images smaller
+    for tiff in glob(os.path.join(deflated_zip, 'Data', '*.tff')):
+        png = tiff.replace('.tiff', '.png')
+        subprocess.call('convert %s %s' % (tiff, png), shell=True)
+        subprocess.call('convert %s %s' % (png, tiff), shell=True)
+
+    # Rearchive
+    shutil.make_archive(deflated_zip, 'zip', deflated_zip)
+    shutil.rmtree(deflated_zip)
+
+    # Move back to key
+    if args.output_file:
+        final_key = args.output_file
+    else:
+        final_key = args.keynote_file
+
+    # Move back to keynote
+    os.rename(zip_file, final_key)
