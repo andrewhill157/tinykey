@@ -1,7 +1,7 @@
 # tinykey
 I use Keynote a lot but the file sizes can sometimes get quite large (100+ MB).
 
-One reason for some of my presentations is that Keynote sometimes stores imported/pasted images as TIFFs that can be quite large in size. `tinypng` can reduce the size of these TIFFs without any dicernable change in quality.
+For some of my presentations, the reason seems to be that Keynote sometimes stores imported/pasted images as TIFFs that can be quite large in size. `tinypng` can reduce the size of these TIFFs without any dicernable change in quality.
 
 # Usage
 You can overwrite a file with:
