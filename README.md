@@ -1,7 +1,7 @@
 # tinykey
 I use Keynote a lot but the file sizes can sometimes get quite large (100+ MB).
 
-For some of my presentations, the reason seems to be that Keynote sometimes stores large imported/pasted images as TIFFs without reducing the file size at all. `tinypng` can reduce the size of these larger files without reducing image quality.
+For some of my presentations, this is because images I have added in are larger than expected and Keynote stores them without much if any optimization, sometimes storing large PNG images as TIFF files. `tinypng` can reduce the size of these larger files without reducing image quality.
 
 # Usage
 You can overwrite a file with:
@@ -12,6 +12,11 @@ tinypng mykey.key
 You can also output a new file if you want to preserve the original file:
 ```
 tinypng mykey.key -o mynewkey.key
+```
+
+You may also compress PNG files in the presentation using the [Pillow](http://python-pillow.org/) quality scale from 0-100:
+```
+tinypng mykey.key -o mynewkey.key --optimize 90
 ```
 
 Note that unless you place this executable on your `PATH` you must run `./tinyping` (if using `tinypng` from the directory you keep it in) or the full path to the tinypng executable. If you have issues running as an executable, you may also use `python tinypng`.

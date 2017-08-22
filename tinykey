@@ -35,7 +35,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Script to make keynote files smaller by reducing sizes of stored images.')
     parser.add_argument('keynote_file', help='Keynote file to make smaller.')
     parser.add_argument('--output_file', '-o', help='Optional name for output file (.key format). Default overwrites original file.')
-    parser.add_argument('--force', '-f', action='store_true', help='Force overwrite of any existing temporary files that already exist.')
+    parser.add_argument('--optimize', default=100, type=int, help='Optimizes PNG file quality. Takes value 1-100 as quality. See PIL save function for documentation on quality scale.')
+    parser.add_argument('--force', '-f', action='store_true', help='Generally ignores any warnings like overwriting existing file with low quality image compression and overwriting existing intermediate files..')
     args = parser.parse_args()
 
     input_ext = args.keynote_file.split('.')[-1]
@@ -52,6 +53,13 @@ if __name__ == '__main__':
     if not which('convert'):
         raise ValueError('command "convert" not found. Must have imagemagick installed (brew install imagemagick, for example) to use tinykey')
 
+
+    if args.optimize:
+        if not args.optimize >=80 and not args.output_file and not args.force:
+            raise ValueError('--optimize set less than 80 and no new output file specified. Overwriting file with lower quality not recommended. Use --force to do anyway.')
+        if not args.optimize > 0 and not args.optimize <= 100:
+            raise ValueError('--optimize argument must be > 0 and <= 100.')
+
     # Copy to zip
     zip_file = args.keynote_file.replace('.key', '.zip')
     shutil.copyfile(args.keynote_file, zip_file)
@@ -63,7 +71,7 @@ if __name__ == '__main__':
         if args.force:
             shutil.rmtree(deflated_zip)
         else:
-            raise ValueError('Folder %s already exists. Please delete this folder or run with --force option.') 
+            raise ValueError('Folder %s already exists. Please delete this folder or run with --force option (this will also ignore all other warnings).') 
     
 
     zip_ref = zipfile.ZipFile(zip_file, 'r')
@@ -79,12 +87,18 @@ if __name__ == '__main__':
     for tiff in glob(os.path.join(deflated_zip, 'Data', '*.tff')):
         png = tiff.replace('.tiff', '.png')
 	image = Image.open(tiff)
-	image.save(png, "PNG")
+	image.save(png, "PNG", optimize=True, quality=args.optimize)
 	image.close()
         image = Image.open(png)
         image.save(tiff, "TIFF")
         image.close()
 	shutil.remove(png)
+
+    if args.optimize:
+        for png in glob(os.path.join(deflated_zip, 'Data', '*.png')):
+            image = Image.open(png)
+            image.save(png, "PNG", optimize=True, quality=args.optimize)
+            image.close()
 
     # Rearchive
     shutil.make_archive(deflated_zip, 'zip', deflated_zip)
